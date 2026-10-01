@@ -1,0 +1,51 @@
+export const theme = {
+  color: {
+    bg: '#f6f7f9',
+    surface: '#ffffff',
+    surface2: '#f2f4f7',
+    surface3: '#e9edf2',
+    border: '#e2e6ec',
+    borderStrong: '#cfd6e0',
+    text: '#16202c',
+    text2: '#475569',
+    muted: '#7b8794',
+    accent: '#4f46e5',
+    accentDark: '#4338ca',
+    accentSoft: '#eef2ff',
+    danger: '#dc2626',
+    dangerDark: '#b91c1c',
+    dangerSoft: '#fef2f2',
+    dangerBorder: '#f3c9c9',
+    success: '#059669',
+    warning: '#d97706',
+    high: '#ef4444',
+    medium: '#f59e0b',
+    low: '#3b82f6',
+    highSoft: '#fef2f2',
+    mediumSoft: '#fffbeb',
+    lowSoft: '#eff6ff',
+    highText: '#b91c1c',
+    mediumText: '#b45309',
+    lowText: '#1d4ed8',
+  },
+  radius: {
+    sm: '8px',
+    md: '12px',
+    pill: '999px',
+  },
+  shadow: {
+    sm: '0 1px 2px rgba(16, 24, 40, 0.05)',
+    md: '0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04)',
+  },
+  layout: {
+    sidebar: '264px',
+    topbar: '56px',
+    contentMax: '1080px',
+  },
+  bp: {
+    sm: '640px',
+    md: '900px',
+  },
+} as const
+
+export type AppTheme = typeof theme
