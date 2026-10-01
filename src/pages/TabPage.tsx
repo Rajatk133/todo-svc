@@ -1,11 +1,17 @@
 import { useEffect } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { setActiveTab } from '../features/tabs/tabsSlice'
 import TodoForm from '../features/todos/TodoForm'
 import TodoList from '../features/todos/TodoList'
 import Filters from '../features/todos/Filters'
 import { selectStatsForTab, selectTabs } from '../features/todos/selectors'
+import { Card, Page, PageHead, PageSub } from '../styles/primitives'
+
+const AlertCount = styled.span`
+  color: ${({ theme }) => theme.color.danger};
+`
 
 export default function TabPage() {
   const { tabId } = useParams<{ tabId: string }>()
@@ -29,23 +35,21 @@ export default function TabPage() {
   }
 
   return (
-    <div className="page">
-      <header className="page__head">
-        <div>
-          <h1>{tab.name}</h1>
-          <p className="page__sub">
-            {stats.total} todo{stats.total === 1 ? '' : 's'} · {stats.active} pending ·{' '}
-            {stats.completed} done
-            {stats.overdue > 0 && <span className="text-alert"> · {stats.overdue} overdue</span>}
-          </p>
-        </div>
-      </header>
+    <Page>
+      <PageHead>
+        <h1>{tab.name}</h1>
+        <PageSub>
+          {stats.total} todo{stats.total === 1 ? '' : 's'} · {stats.active} pending ·{' '}
+          {stats.completed} done
+          {stats.overdue > 0 && <AlertCount> · {stats.overdue} overdue</AlertCount>}
+        </PageSub>
+      </PageHead>
 
-      <section className="card">
+      <Card>
         <TodoForm tabId={tabId} tabName={tab.name} />
         <Filters tabId={tabId} />
         <TodoList tabId={tabId} />
-      </section>
-    </div>
+      </Card>
+    </Page>
   )
 }

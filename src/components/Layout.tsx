@@ -96,16 +96,6 @@ const SidebarNav = styled.nav`
   }
 `
 
-const SidebarLabel = styled.p`
-  margin: 0 0 6px;
-  padding: 0 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: ${({ theme }) => theme.color.muted};
-`
-
 const Main = styled.div`
   display: flex;
   flex-direction: column;
@@ -213,5 +203,3 @@ export default function Layout() {
     </Shell>
   )
 }
-
-export { SidebarLabel }

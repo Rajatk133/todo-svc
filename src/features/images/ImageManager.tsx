@@ -1,10 +1,73 @@
 import { useRef, useState, type DragEvent } from 'react'
+import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { selectImagesForTab, selectTodosForActiveTab } from '../todos/selectors'
 import { addImages, buildAssets, clearTabImages, MAX_IMAGE_BYTES } from './imagesSlice'
 import { readFileAsDataUrl } from './readFile'
 import ImageThumbnails from './ImageThumbnails'
 import { formatBytes } from '../../utils/date'
+import { AlertList, Button, Field, LinkButton, Select } from '../../styles/primitives'
+
+const Panel = styled.section`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: 20px;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+`
+
+const Head = styled.header`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+`
+
+const Hint = styled.p`
+  margin: 3px 0 0;
+  color: ${({ theme }) => theme.color.muted};
+  font-size: 12px;
+`
+
+const Dropzone = styled.div<{ $active: boolean }>`
+  border: 2px dashed
+    ${({ $active, theme }) => ($active ? theme.color.accent : theme.color.borderStrong)};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: 32px 20px;
+  text-align: center;
+  background: ${({ $active, theme }) =>
+    $active ? theme.color.accentSoft : theme.color.surface2};
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.text2};
+  }
+`
+
+const DropIcon = styled.p`
+  font-size: 22px;
+  color: ${({ theme }) => theme.color.muted};
+  margin-bottom: 6px !important;
+`
+
+const DropMeta = styled.p`
+  color: ${({ theme }) => theme.color.muted} !important;
+  font-size: 12px !important;
+  margin-top: 8px !important;
+`
+
+const InlineField = styled(Field)`
+  margin-top: 14px;
+  max-width: 380px;
+`
 
 export default function ImageManager() {
   const dispatch = useAppDispatch()
@@ -12,15 +75,14 @@ export default function ImageManager() {
     state.tabs.items.find((tab) => tab.id === state.tabs.activeTabId),
   )
   const images = useAppSelector(selectImagesForTab)
-  // Must be a memoized selector — an inline `.filter()` returns a fresh array
-  // reference on every call and forces needless re-renders.
+  // Memoized selector — an inline .filter() would return a new array each call.
   const tabTodos = useAppSelector(selectTodosForActiveTab)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<string[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isReading, setIsReading] = useState(false)
-  const [linkToTodoId, setLinkToTodoId] = useState<string>('')
+  const [linkToTodoId, setLinkToTodoId] = useState('')
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0 || !activeTab) return
@@ -73,19 +135,20 @@ export default function ImageManager() {
   if (!activeTab) return null
 
   return (
-    <section className="images">
-      <header className="images__header">
+    <Panel>
+      <Head>
         <div>
           <h3>Images</h3>
-          <p className="images__hint">
+          <Hint>
             {images.length} image{images.length === 1 ? '' : 's'} in “{activeTab.name}” ·{' '}
             <strong>in-memory only</strong>, cleared on refresh
-          </p>
+          </Hint>
         </div>
         {images.length > 0 && (
-          <button
+          <Button
             type="button"
-            className="button button--ghost button--sm"
+            $variant="ghost"
+            $size="sm"
             onClick={() => {
               if (window.confirm(`Remove all ${images.length} image(s) from this tab?`)) {
                 dispatch(clearTabImages(activeTab.id))
@@ -93,12 +156,12 @@ export default function ImageManager() {
             }}
           >
             Clear all
-          </button>
+          </Button>
         )}
-      </header>
+      </Head>
 
-      <div
-        className={`dropzone ${isDragging ? 'dropzone--active' : ''}`}
+      <Dropzone
+        $active={isDragging}
         onDragOver={(event) => {
           event.preventDefault()
           setIsDragging(true)
@@ -114,25 +177,23 @@ export default function ImageManager() {
           hidden
           onChange={(event) => void handleFiles(event.target.files)}
         />
-        <p className="dropzone__icon" aria-hidden="true">
-          ⬆
-        </p>
+        <DropIcon aria-hidden="true">⬆</DropIcon>
         <p>
           Drag &amp; drop images here, or{' '}
-          <button type="button" className="link-button" onClick={() => inputRef.current?.click()}>
+          <LinkButton type="button" onClick={() => inputRef.current?.click()}>
             browse files
-          </button>
+          </LinkButton>
         </p>
-        <p className="dropzone__meta">
+        <DropMeta>
           PNG, JPG, GIF, WEBP or SVG · up to {formatBytes(MAX_IMAGE_BYTES)} each
-        </p>
-        {isReading && <p className="dropzone__meta">Reading files…</p>}
-      </div>
+        </DropMeta>
+        {isReading && <DropMeta>Reading files…</DropMeta>}
+      </Dropzone>
 
       {tabTodos.length > 0 && (
-        <label className="field field--inline">
+        <InlineField>
           <span>Attach uploads to a todo</span>
-          <select value={linkToTodoId} onChange={(event) => setLinkToTodoId(event.target.value)}>
+          <Select value={linkToTodoId} onChange={(event) => setLinkToTodoId(event.target.value)}>
             <option value="">No todo (tab gallery)</option>
             {tabTodos.map((todo) => (
               <option key={todo.id} value={todo.id}>
@@ -140,19 +201,19 @@ export default function ImageManager() {
                 {todo.title}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </InlineField>
       )}
 
       {errors.length > 0 && (
-        <ul className="errors" role="alert">
+        <AlertList role="alert">
           {errors.map((message) => (
             <li key={message}>{message}</li>
           ))}
-        </ul>
+        </AlertList>
       )}
 
       <ImageThumbnails images={images} />
-    </section>
+    </Panel>
   )
 }

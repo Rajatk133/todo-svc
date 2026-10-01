@@ -1,16 +1,15 @@
 import ImageManager from '../features/images/ImageManager'
+import { Page, PageHead, PageSub } from '../styles/primitives'
 
 export default function ImagesPage() {
   return (
-    <div className="page">
-      <header className="page__head">
+    <Page>
+      <PageHead>
         <h1>Images</h1>
-        <p className="page__sub">
-          Upload images for the active tab, or attach them to a specific todo.
-        </p>
-      </header>
+        <PageSub>Upload images for the active tab, or attach them to a specific todo.</PageSub>
+      </PageHead>
 
       <ImageManager />
-    </div>
+    </Page>
   )
 }

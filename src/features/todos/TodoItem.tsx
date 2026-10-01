@@ -1,3 +1,4 @@
+import styled from 'styled-components'
 import { useState, type FormEvent } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { deleteTodo, toggleTodo, updateTodo } from './todosSlice'
@@ -5,6 +6,98 @@ import { selectImagesForTodo } from './selectors'
 import type { Priority, Todo } from '../../types'
 import { formatDueDate, isOverdue, PRIORITIES, PRIORITY_LABEL } from '../../utils/date'
 import ImageThumbnails from '../images/ImageThumbnails'
+import { Badge, Button, IconButton, Input, Select, Textarea } from '../../styles/primitives'
+
+const Item = styled.li<{ $priority: Priority; $done: boolean; $editing?: boolean }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: ${({ $done, $editing, theme }) =>
+    $editing ? theme.color.surface2 : $done ? theme.color.surface2 : theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-left: 3px solid
+    ${({ $priority, $editing, theme }) => {
+      if ($editing) return theme.color.accent
+      return { high: theme.color.high, medium: theme.color.medium, low: theme.color.low }[
+        $priority
+      ]
+    }};
+  border-radius: 10px;
+  padding: 13px 14px;
+  transition: box-shadow 0.14s ease;
+
+  &:hover { box-shadow: ${({ theme }) => theme.shadow.md}; }
+`
+
+const Check = styled.label`
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: ${({ theme }) => theme.color.accent};
+    cursor: pointer;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+`
+
+const Body = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+`
+
+const Title = styled.p<{ $done: boolean }>`
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  text-decoration: ${({ $done }) => ($done ? 'line-through' : 'none')};
+  color: ${({ $done, theme }) => ($done ? theme.color.muted : theme.color.text)};
+`
+
+const Notes = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.color.text2};
+  font-size: 14px;
+  overflow-wrap: anywhere;
+`
+
+const Badges = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`
+
+const Actions = styled.div`
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+
+  ${Item}:hover &,
+  ${Item}:focus-within & {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
+`
+
+const EditForm = styled.form`
+  display: grid;
+  gap: 8px;
+  width: 100%;
+`
+
+const EditMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+
+  select, input { width: auto; }
+`
 
 interface Props {
   todo: Todo
@@ -33,16 +126,18 @@ export default function TodoItem({ todo }: Props) {
   function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (title.trim()) {
-      dispatch(updateTodo({ id: todo.id, changes: { title, notes, priority, dueDate: dueDate || null } }))
+      dispatch(
+        updateTodo({ id: todo.id, changes: { title, notes, priority, dueDate: dueDate || null } }),
+      )
     }
     setIsEditing(false)
   }
 
   if (isEditing) {
     return (
-      <li className="todo todo--editing">
-        <form className="todo__edit-form" onSubmit={handleSave}>
-          <input
+      <Item $priority={todo.priority} $done={false} $editing>
+        <EditForm onSubmit={handleSave}>
+          <Input
             autoFocus
             value={title}
             aria-label="Todo title"
@@ -51,15 +146,15 @@ export default function TodoItem({ todo }: Props) {
               if (event.key === 'Escape') setIsEditing(false)
             }}
           />
-          <textarea
+          <Textarea
             value={notes}
             rows={2}
             placeholder="Notes"
             aria-label="Notes"
             onChange={(event) => setNotes(event.target.value)}
           />
-          <div className="todo__edit-meta">
-            <select
+          <EditMeta>
+            <Select
               value={priority}
               aria-label="Priority"
               onChange={(event) => setPriority(event.target.value as Priority)}
@@ -69,72 +164,60 @@ export default function TodoItem({ todo }: Props) {
                   {PRIORITY_LABEL[value]}
                 </option>
               ))}
-            </select>
-            <input
+            </Select>
+            <Input
               type="date"
               value={dueDate}
               aria-label="Due date"
               onChange={(event) => setDueDate(event.target.value)}
             />
-            <button type="submit" className="button button--primary button--sm">
+            <Button type="submit" $variant="primary" $size="sm">
               Save
-            </button>
-            <button
-              type="button"
-              className="button button--ghost button--sm"
-              onClick={() => setIsEditing(false)}
-            >
+            </Button>
+            <Button type="button" $variant="ghost" $size="sm" onClick={() => setIsEditing(false)}>
               Cancel
-            </button>
-          </div>
-        </form>
-      </li>
+            </Button>
+          </EditMeta>
+        </EditForm>
+      </Item>
     )
   }
 
   return (
-    <li className={`todo priority-border-${todo.priority} ${todo.completed ? 'todo--done' : ''}`}>
-      <label className="todo__check">
+    <Item $priority={todo.priority} $done={todo.completed}>
+      <Check>
         <input
           type="checkbox"
           checked={todo.completed}
           aria-label={`Mark "${todo.title}" as ${todo.completed ? 'pending' : 'complete'}`}
           onChange={() => dispatch(toggleTodo(todo.id))}
         />
-      </label>
+      </Check>
 
-      <div className="todo__body">
-        <p className="todo__title">{todo.title}</p>
-        {todo.notes && <p className="todo__notes">{todo.notes}</p>}
+      <Body>
+        <Title $done={todo.completed}>{todo.title}</Title>
+        {todo.notes && <Notes>{todo.notes}</Notes>}
 
-        <div className="todo__badges">
-          <span className={`badge badge--${todo.priority}`}>{PRIORITY_LABEL[todo.priority]}</span>
-          <span className={`badge badge--due ${overdue ? 'badge--overdue' : ''}`}>
-            {formatDueDate(todo.dueDate)}
-          </span>
+        <Badges>
+          <Badge $tone={todo.priority}>{PRIORITY_LABEL[todo.priority]}</Badge>
+          <Badge $tone={overdue ? 'alert' : 'neutral'}>{formatDueDate(todo.dueDate)}</Badge>
           {images.length > 0 && (
-            <span className="badge">
+            <Badge>
               {images.length} image{images.length === 1 ? '' : 's'}
-            </span>
+            </Badge>
           )}
-        </div>
+        </Badges>
 
         {images.length > 0 && <ImageThumbnails images={images} />}
-      </div>
+      </Body>
 
-      <div className="todo__actions">
-        <button
-          type="button"
-          className="icon-button"
-          title="Edit"
-          aria-label={`Edit ${todo.title}`}
-          onClick={beginEdit}
-        >
+      <Actions>
+        <IconButton type="button" title="Edit" aria-label={`Edit ${todo.title}`} onClick={beginEdit}>
           ✎
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           type="button"
-          className="icon-button icon-button--danger"
+          $danger
           title="Delete"
           aria-label={`Delete ${todo.title}`}
           onClick={() => {
@@ -142,8 +225,8 @@ export default function TodoItem({ todo }: Props) {
           }}
         >
           ✕
-        </button>
-      </div>
-    </li>
+        </IconButton>
+      </Actions>
+    </Item>
   )
 }

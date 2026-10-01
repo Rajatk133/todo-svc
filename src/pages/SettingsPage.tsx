@@ -1,8 +1,23 @@
+import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { setSort } from '../features/ui/uiSlice'
 import { clearPersistedState } from '../app/persistence'
 import { selectAllImages, selectAllTodos } from '../features/todos/selectors'
 import type { SortKey } from '../types'
+import {
+  BulletList,
+  Button,
+  Card,
+  CardHead,
+  Field,
+  Grid2,
+  KeyValue,
+  MutedText,
+  Page,
+  PageHead,
+  PageSub,
+  Select,
+} from '../styles/primitives'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'created-desc', label: 'Newest first' },
@@ -11,10 +26,17 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'priority-desc', label: 'Priority' },
 ]
 
+const DangerCard = styled(Card)`
+  border-color: ${({ theme }) => theme.color.dangerBorder};
+  background: ${({ theme }) => theme.color.dangerSoft};
+
+  h2 { color: ${({ theme }) => theme.color.highText}; }
+`
+
 export default function SettingsPage() {
   const dispatch = useAppDispatch()
   const sort = useAppSelector((state) => state.ui.sort)
-  const tabs = useAppSelector((state) => state.tabs.items.length)
+  const tabCount = useAppSelector((state) => state.tabs.items.length)
   const todos = useAppSelector(selectAllTodos)
   const images = useAppSelector(selectAllImages)
 
@@ -30,21 +52,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="page">
-      <header className="page__head">
+    <Page>
+      <PageHead>
         <h1>Settings</h1>
-        <p className="page__sub">Preferences and stored data.</p>
-      </header>
+        <PageSub>Preferences and stored data.</PageSub>
+      </PageHead>
 
-      <div className="grid-2">
-        <section className="card">
-          <header className="card__head">
+      <Grid2>
+        <Card>
+          <CardHead>
             <h2>Preferences</h2>
-          </header>
+          </CardHead>
 
-          <label className="field">
+          <Field>
             <span>Default sort order</span>
-            <select
+            <Select
               value={sort}
               onChange={(event) => dispatch(setSort(event.target.value as SortKey))}
             >
@@ -53,18 +75,18 @@ export default function SettingsPage() {
                   {option.label}
                 </option>
               ))}
-            </select>
-          </label>
-        </section>
+            </Select>
+          </Field>
+        </Card>
 
-        <section className="card">
-          <header className="card__head">
+        <Card>
+          <CardHead>
             <h2>Stored data</h2>
-          </header>
-          <dl className="kv">
+          </CardHead>
+          <KeyValue>
             <div>
               <dt>Tabs</dt>
-              <dd>{tabs}</dd>
+              <dd>{tabCount}</dd>
             </div>
             <div>
               <dt>Todos</dt>
@@ -74,15 +96,15 @@ export default function SettingsPage() {
               <dt>Images (this session)</dt>
               <dd>{images.length}</dd>
             </div>
-          </dl>
-        </section>
-      </div>
+          </KeyValue>
+        </Card>
+      </Grid2>
 
-      <section className="card">
-        <header className="card__head">
+      <Card>
+        <CardHead>
           <h2>How saving works</h2>
-        </header>
-        <ul className="bullets">
+        </CardHead>
+        <BulletList>
           <li>
             Tabs, todos and your sort preference are written to <code>localStorage</code> and
             restored when you return.
@@ -92,20 +114,18 @@ export default function SettingsPage() {
             because the ~5 MB <code>localStorage</code> quota cannot hold them as base64.
           </li>
           <li>Data stays in your browser. Nothing is sent to a server.</li>
-        </ul>
-      </section>
+        </BulletList>
+      </Card>
 
-      <section className="card card--danger">
-        <header className="card__head">
+      <DangerCard>
+        <CardHead>
           <h2>Danger zone</h2>
-        </header>
-        <p className="muted">
-          Permanently remove all tabs and todos saved in this browser.
-        </p>
-        <button type="button" className="button button--danger" onClick={handleReset}>
+        </CardHead>
+        <MutedText>Permanently remove all tabs and todos saved in this browser.</MutedText>
+        <Button type="button" $variant="danger" onClick={handleReset}>
           Reset all data
-        </button>
-      </section>
-    </div>
+        </Button>
+      </DangerCard>
+    </Page>
   )
 }

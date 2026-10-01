@@ -1,7 +1,153 @@
 import { Link } from 'react-router-dom'
+import styled from 'styled-components'
 import { useAppSelector } from '../app/hooks'
 import { selectAllImages, selectAllTodos, selectTabs } from '../features/todos/selectors'
 import { PRIORITY_LABEL, toDateKey } from '../utils/date'
+import {
+  Badge,
+  Card,
+  CardHead,
+  Grid2,
+  LinkButton,
+  MutedText,
+  Page,
+  PageHead,
+  PageSub,
+  Pill,
+  StatCard,
+  StatGrid,
+  StatLabel,
+  StatValue,
+} from '../styles/primitives'
+
+const ProgressList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+`
+
+const ProgressRow = styled(Link)`
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'dot name meta'
+    'dot bar pct';
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  color: ${({ theme }) => theme.color.text};
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surface2};
+    text-decoration: none;
+  }
+`
+
+const RowDot = styled.span`
+  grid-area: dot;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+`
+
+const RowName = styled.span`
+  grid-area: name;
+  font-weight: 500;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+const RowMeta = styled.span`
+  grid-area: meta;
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+  font-variant-numeric: tabular-nums;
+`
+
+const Bar = styled.span`
+  grid-area: bar;
+  height: 6px;
+  background: ${({ theme }) => theme.color.surface3};
+  border-radius: ${({ theme }) => theme.radius.pill};
+  overflow: hidden;
+`
+
+const BarFill = styled.span`
+  display: block;
+  height: 100%;
+  border-radius: ${({ theme }) => theme.radius.pill};
+  transition: width 0.25s ease;
+`
+
+const RowPct = styled.span`
+  grid-area: pct;
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+  font-variant-numeric: tabular-nums;
+  justify-self: end;
+`
+
+const AttentionList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+`
+
+const AttentionRow = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  color: ${({ theme }) => theme.color.text};
+
+  &:hover {
+    background: ${({ theme }) => theme.color.surface2};
+    text-decoration: none;
+  }
+`
+
+const AttentionTitle = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+`
+
+const AttentionMeta = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+`
+
+const AttentionDue = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.danger};
+  font-weight: 600;
+`
+
+const InlineEmpty = styled.div`
+  text-align: center;
+  padding: 24px 12px;
+  color: ${({ theme }) => theme.color.muted};
+
+  p { margin: 0; font-size: 14px; }
+
+  .icon {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: ${({ theme }) => theme.color.success};
+  }
+`
 
 export default function DashboardPage() {
   const tabs = useAppSelector(selectTabs)
@@ -13,115 +159,106 @@ export default function DashboardPage() {
   const overdue = todos.filter(
     (todo) => !todo.completed && todo.dueDate !== null && todo.dueDate < today,
   )
-  const dueToday = todos.filter(
-    (todo) => !todo.completed && todo.dueDate === today,
-  )
+  const dueToday = todos.filter((todo) => !todo.completed && todo.dueDate === today)
 
   const stats = [
-    { label: 'Tabs', value: tabs.length },
-    { label: 'Total todos', value: todos.length },
-    { label: 'Completed', value: completed },
+    { label: 'Tabs', value: tabs.length, alert: false },
+    { label: 'Total todos', value: todos.length, alert: false },
+    { label: 'Completed', value: completed, alert: false },
     { label: 'Overdue', value: overdue.length, alert: overdue.length > 0 },
   ]
 
   return (
-    <div className="page">
-      <header className="page__head">
+    <Page>
+      <PageHead>
         <h1>Dashboard</h1>
-        <p className="page__sub">Everything across all tabs, at a glance.</p>
-      </header>
+        <PageSub>Everything across all tabs, at a glance.</PageSub>
+      </PageHead>
 
-      <section className="stat-grid">
+      <StatGrid>
         {stats.map((stat) => (
-          <div key={stat.label} className={`stat-card ${stat.alert ? 'stat-card--alert' : ''}`}>
-            <p className="stat-card__label">{stat.label}</p>
-            <p className="stat-card__value">{stat.value}</p>
-          </div>
+          <StatCard key={stat.label} $alert={stat.alert}>
+            <StatLabel>{stat.label}</StatLabel>
+            <StatValue $alert={stat.alert}>{stat.value}</StatValue>
+          </StatCard>
         ))}
-      </section>
+      </StatGrid>
 
-      <div className="grid-2">
-        <section className="card">
-          <header className="card__head">
+      <Grid2>
+        <Card>
+          <CardHead>
             <h2>Tabs</h2>
-            <span className="pill">{tabs.length}</span>
-          </header>
-          <ul className="progress-list">
+            <Pill>{tabs.length}</Pill>
+          </CardHead>
+          <ProgressList>
             {tabs.map((tab) => {
               const inTab = todos.filter((todo) => todo.tabId === tab.id)
               const done = inTab.filter((todo) => todo.completed).length
               const pct = inTab.length === 0 ? 0 : Math.round((done / inTab.length) * 100)
               return (
                 <li key={tab.id}>
-                  <Link to={`/tab/${tab.id}`} className="progress-row">
-                    <span className="progress-row__dot" style={{ background: tab.color }} />
-                    <span className="progress-row__name">{tab.name}</span>
-                    <span className="progress-row__meta">
+                  <ProgressRow to={`/tab/${tab.id}`}>
+                    <RowDot style={{ background: tab.color }} />
+                    <RowName>{tab.name}</RowName>
+                    <RowMeta>
                       {done}/{inTab.length}
-                    </span>
-                    <span className="progress-bar" aria-hidden="true">
-                      <span
-                        className="progress-bar__fill"
-                        style={{ width: `${pct}%`, background: tab.color }}
-                      />
-                    </span>
-                    <span className="progress-row__pct">{pct}%</span>
-                  </Link>
+                    </RowMeta>
+                    <Bar aria-hidden="true">
+                      <BarFill style={{ width: `${pct}%`, background: tab.color }} />
+                    </Bar>
+                    <RowPct>{pct}%</RowPct>
+                  </ProgressRow>
                 </li>
               )
             })}
-          </ul>
-        </section>
+          </ProgressList>
+        </Card>
 
-        <section className="card">
-          <header className="card__head">
+        <Card>
+          <CardHead>
             <h2>Needs attention</h2>
-            <span className="pill">{overdue.length + dueToday.length}</span>
-          </header>
+            <Pill>{overdue.length + dueToday.length}</Pill>
+          </CardHead>
 
           {overdue.length === 0 && dueToday.length === 0 ? (
-            <div className="empty empty--inline">
-              <p className="empty__icon" aria-hidden="true">
+            <InlineEmpty>
+              <p className="icon" aria-hidden="true">
                 ✓
               </p>
               <p>Nothing overdue or due today.</p>
-            </div>
+            </InlineEmpty>
           ) : (
-            <ul className="attention">
+            <AttentionList>
               {[...overdue, ...dueToday].map((todo) => {
                 const tab = tabs.find((t) => t.id === todo.tabId)
                 return (
                   <li key={todo.id}>
-                    <Link to={`/tab/${todo.tabId}`} className="attention__row">
-                      <span className={`badge badge--${todo.priority}`}>
-                        {PRIORITY_LABEL[todo.priority]}
-                      </span>
-                      <span className="attention__title">{todo.title}</span>
-                      <span className="attention__tab">{tab?.name ?? '—'}</span>
-                      <span className="attention__due">
-                        {todo.dueDate === today ? 'today' : todo.dueDate}
-                      </span>
-                    </Link>
+                    <AttentionRow to={`/tab/${todo.tabId}`}>
+                      <Badge $tone={todo.priority}>{PRIORITY_LABEL[todo.priority]}</Badge>
+                      <AttentionTitle>{todo.title}</AttentionTitle>
+                      <AttentionMeta>{tab?.name ?? '—'}</AttentionMeta>
+                      <AttentionDue>{todo.dueDate === today ? 'today' : todo.dueDate}</AttentionDue>
+                    </AttentionRow>
                   </li>
                 )
               })}
-            </ul>
+            </AttentionList>
           )}
-        </section>
-      </div>
+        </Card>
+      </Grid2>
 
-      <section className="card">
-        <header className="card__head">
+      <Card>
+        <CardHead>
           <h2>Images</h2>
-          <Link to="/images" className="link-button">
+          <LinkButton as={Link} to="/images">
             Manage →
-          </Link>
-        </header>
-        <p className="muted">
+          </LinkButton>
+        </CardHead>
+        <MutedText>
           {images.length} image{images.length === 1 ? '' : 's'} uploaded this session. Images are
           held in memory only and clear on refresh.
-        </p>
-      </section>
-    </div>
+        </MutedText>
+      </Card>
+    </Page>
   )
 }

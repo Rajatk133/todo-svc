@@ -1,7 +1,9 @@
+import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { resetFilters, setPriorityFilter, setSearch, setSort, setStatusFilter } from '../ui/uiSlice'
 import { selectIsFilterActive, selectVisibleTodos } from './selectors'
 import type { PriorityFilter, SortKey, StatusFilter } from '../../types'
+import { Button, Input, Select } from '../../styles/primitives'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -23,6 +25,35 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'priority-desc', label: 'Priority' },
 ]
 
+const Bar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  margin-bottom: 6px;
+
+  select { width: auto; min-width: 130px; }
+`
+
+const Search = styled(Input)`
+  flex: 1;
+  min-width: 200px;
+
+  @media (max-width: ${({ theme }) => theme.bp.sm}) {
+    min-width: 100%;
+  }
+`
+
+const Count = styled.span`
+  color: ${({ theme }) => theme.color.muted};
+  font-size: 13px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+`
+
 interface Props {
   tabId: string
 }
@@ -34,17 +65,16 @@ export default function Filters({ tabId }: Props) {
   const visibleCount = useAppSelector(selectVisibleTodos(tabId)).length
 
   return (
-    <div className="filters">
-      <input
+    <Bar>
+      <Search
         type="search"
-        className="filters__search"
         value={ui.search}
         placeholder="Search title or notes…"
         aria-label="Search todos"
         onChange={(event) => dispatch(setSearch(event.target.value))}
       />
 
-      <select
+      <Select
         value={ui.status}
         aria-label="Filter by status"
         onChange={(event) => dispatch(setStatusFilter(event.target.value as StatusFilter))}
@@ -54,9 +84,9 @@ export default function Filters({ tabId }: Props) {
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         value={ui.priority}
         aria-label="Filter by priority"
         onChange={(event) => dispatch(setPriorityFilter(event.target.value as PriorityFilter))}
@@ -66,9 +96,9 @@ export default function Filters({ tabId }: Props) {
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         value={ui.sort}
         aria-label="Sort todos"
         onChange={(event) => dispatch(setSort(event.target.value as SortKey))}
@@ -78,21 +108,15 @@ export default function Filters({ tabId }: Props) {
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <span className="filters__count" aria-live="polite">
-        {visibleCount} shown
-      </span>
+      <Count aria-live="polite">{visibleCount} shown</Count>
 
       {isFilterActive && (
-        <button
-          type="button"
-          className="button button--ghost button--sm"
-          onClick={() => dispatch(resetFilters())}
-        >
+        <Button type="button" $variant="ghost" $size="sm" onClick={() => dispatch(resetFilters())}>
           Clear
-        </button>
+        </Button>
       )}
-    </div>
+    </Bar>
   )
 }
